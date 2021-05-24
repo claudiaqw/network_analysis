@@ -48,6 +48,12 @@ En este apartado, se pide realizar los pasos adecuados para generar un nuevo obj
 
 ```{r}
 ### Inserta aqui tu codigo
+is.connected(g)
+components <- clusters(g, mode="weak")
+biggest_cluster_id <- which.max(components$csize)
+
+vert_ids <- V(g)[components$membership == biggest_cluster_id]
+connected_g <- induced_subgraph(g, vert_ids)
 ```
 
 
