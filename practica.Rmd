@@ -23,9 +23,24 @@ En este apartado, se pide:
 * Comprobar que, efectivamente, tiene el número de nodos y enlaces correcto.
 * Simplificar: eliminar bucles y agregar enlaces múltiples, contando cuántas veces aparece un enlace y almacenándolo como un peso de la red resultante.
 
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+library(igraph)
+```
+
+
 ```{r}
 ### Inserta aqui tu codigo
+dd <- read.csv("red_contactos.csv", sep=';')
+g<-graph.data.frame(dd, directed=FALSE)
+summary(g)
 ```
+```{r}
+sum(is.loop(g))
+g <- simplify(g, edge.attr.comb = "sum")
+
+```
+
+
 
 ## Selección de la componente conexa mayor (0,5 puntos)
 
