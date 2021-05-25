@@ -1,30 +1,31 @@
 ---
-title: "Pr·ctica - An·lisis de Redes Sociales - MDSF"
-author: "TU NOMBRE"
+title: "Practica - Analisis de Redes Sociales - MDSF"
+author: "Claudia Quintana Wong"
 output:
   html_document:
     df_print: paged
 ---
 
-Este R Markdown recoge el enunciado de la pr·ctica de la asignatura de redes sociales.
+Este R Markdown recoge el enunciado de la pr√°ctica de la asignatura de redes sociales.
 
-El objetivo es analizar un grafo, que se provee como fichero en el mismo paquete que este enunciado. En este fichero, encontramos solamente dos columnas, correspondiente a una interacciÛn entre dos nodos de la red. Esta red est· formada por distintos individuos que tienen contactos cara a cara durante un perÌodo de tiempo.
+El objetivo es analizar un grafo, que se provee como fichero en el mismo paquete que este enunciado. En este fichero, encontramos solamente dos columnas, correspondiente a una interacci√≥n entre dos nodos de la red. Esta red est√° formada por distintos individuos que tienen contactos cara a cara durante un per√≠odo de tiempo.
 
-A continuaciÛn, dividimos la pr·ctica en apartados, con una breve descripciÛn de quÈ debe contener cada chunk de cÛdigo donde el alumno desarrollar· su respuesta asÌ como las explicaciones que considere oportunas. Por favor, razona todas tus soluciones y escribe las explicaciones en azul.
+A continuaci√≥n, dividimos la pr√°ctica en apartados, con una breve descripci√≥n de qu√© debe contener cada chunk de c√≥digo donde el alumno desarrollar√° su respuesta as√≠ como las explicaciones que considere oportunas. Por favor, razona todas tus soluciones y escribe las explicaciones en azul.
 
-Junto al tÌtulo de cada apartado se encuentra la puntuaciÛn del mismo (pueden obtenerse hasta 10,5 puntos, aunque solamente se evaluar· del 0 al 10).
+Junto al t√≠tulo de cada apartado se encuentra la puntuaci√≥n del mismo (pueden obtenerse hasta 10,5 puntos, aunque solamente se evaluar√° del 0 al 10).
 
 ## Carga de datos y comprobaciones iniciales (0,5 puntos)
 
 En este apartado, se pide:
 
-* Cargar el fichero adjunto en la pr·ctica.
-* Convertirlo en un objeto grafo de IGraph. Se cargar· como un grafo NO dirigido.
-* Comprobar que, efectivamente, tiene el n˙mero de nodos y enlaces correcto.
-* Simplificar: eliminar bucles y agregar enlaces m˙ltiples, contando cu·ntas veces aparece un enlace y almacen·ndolo como un peso de la red resultante.
+* Cargar el fichero adjunto en la pr√°ctica.
+* Convertirlo en un objeto grafo de IGraph. Se cargar√° como un grafo NO dirigido.
+* Comprobar que, efectivamente, tiene el n√∫mero de nodos y enlaces correcto.
+* Simplificar: eliminar bucles y agregar enlaces m√∫ltiples, contando cu√°ntas veces aparece un enlace y almacen√°ndolo como un peso de la red resultante.
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
 library(igraph)
+library(ggplot2)
 ```
 
 
@@ -36,13 +37,14 @@ summary(g)
 ```
 ```{r}
 sum(is.loop(g))
+
+E(g)$weight <- 1
+
 g <- simplify(g, edge.attr.comb = "sum")
+sum(is.loop(g))
 
 ```
-
-
-
-## SelecciÛn de la componente conexa mayor (0,5 puntos)
+## Selecci√≥n de la componente conexa mayor (0,5 puntos)
 
 En este apartado, se pide realizar los pasos adecuados para generar un nuevo objeto grafo, que sea conexo, y que involucre a todos los nodos y enlaces de la componente conexa mayor del grafo original.
 
@@ -53,64 +55,128 @@ components <- clusters(g, mode="weak")
 biggest_cluster_id <- which.max(components$csize)
 
 vert_ids <- V(g)[components$membership == biggest_cluster_id]
-connected_g <- induced_subgraph(g, vert_ids)
+conn_g <- induced_subgraph(g, vids=vert_ids)
+is.connected(conn_g)
 ```
 
 
-## An·lisis descriptivo de la componente conexa mayor (2,5 puntos)
+## An√°lisis descriptivo de la componente conexa mayor (2,5 puntos)
 
-En este apartado, se pide analizar descriptivamente el grafo usando los conceptos que hemos visto durante las clases de teorÌa:
+En este apartado, se pide analizar descriptivamente el grafo usando los conceptos que hemos visto durante las clases de teor√≠a:
 
 * Grado medio
 * Distancia media
-* Di·metro
-* DistribuciÛn de grados y ajuste a una Power-Law
+* Di√°metro
+* Distribuci√≥n de grados y ajuste a una Power-Law
 * Clustering
-* EntropÌa de los nodos
-* Centralidad de los nodos y comparaciÛn con mÈtricas de grado y clustering
+* Entrop√≠a de los nodos
+* Centralidad de los nodos y comparaci√≥n con m√©tricas de grado y clustering
 
 
 ```{r}
 ### Inserta aqui tu codigo
+
+#grado medio
+mean(degree(conn_g))
+
+#distancia media
+average.path.length(conn_g)
+
+#diametro
+diameter(conn_g)
+
+#grade distribution
+df <- data.frame(degree = degree(conn_g))
+ggplot(df) +
+  geom_bar(aes(x=degree))
+
+
+
+deg.dist <- degree_distribution(conn_g, cumulative=T, mode="all")
+deg <- degree(conn_g)
+plot(x=0:max(deg), y=1-deg.dist, pch=19, cex=1.2, col="orange", xlab="Degree", ylab="Cumulative Frequency")
+
+
+# Power-law #TODO
+
+
+# Clustering
+components <- clusters(conn_g, mode="weak")
+components$csize
+components$no
+```
+
+<span style="color: blue;">La entrop√≠a de un grafo ...</span>
+
+```{r}
+# entropy
+diversity = diversity(conn_g, weights = NULL, vids = V(conn_g))
+```
+
+<span style="color: blue;">La centralidad de un nodo se puede calcular de diversas maneras. En este caso, se interpreta como la cantidad de veces que un nodo aparece en el camino m√≠nimo entre dos otros nodos. </span>
+
+```{r}
+bets<-betweenness(conn_g,directed=FALSE)
+clos<-closeness(conn_g)
+mean(bets)
 ```
 
 
-## An·lisis de comunidades de la componente conexa mayor (1,5 puntos)
+## An√°lisis de comunidades de la componente conexa mayor (1,5 puntos)
 
-En este apartado, se pide aplicar dos algoritmos de detecciÛn de comunidades, compararlos y seleccionar cu·l es, en tu opiniÛn, el que da una mejor respuesta. Razona tu selecciÛn.
+En este apartado, se pide aplicar dos algoritmos de detecci√≥n de comunidades, compararlos y seleccionar cu√°l es, en tu opini√≥n, el que da una mejor respuesta. Razona tu selecci√≥n.
 
 ```{r}
-### Inserta aqui tu codigo
+comms<-fastgreedy.community(conn_g) #greedy
+modularity(comms)
+
+comms2<-infomap.community(conn_g)
+comms3<-walktrap.community(conn_g)
+comms4<-label.propagation.community(conn_g)
+comms5<-multilevel.community(conn_g)
+
+compare(comm1 = comms, comm2 = comms2,method = "nmi")
+
+
 ```
 
 
-## VisualizaciÛn del grafo por comunidades de la componente conexa mayor (1,5 puntos)
+## Visualizaci√≥n del grafo por comunidades de la componente conexa mayor (1,5 puntos)
 
-En este apartado, se pide visualizar el grafo coloreando cada nodo en funciÛn de la comunidad a la que pertenezca, seg˙n tu elecciÛn del apartado anterior.
+En este apartado, se pide visualizar el grafo coloreando cada nodo en funci√≥n de la comunidad a la que pertenezca, seg√∫n tu elecci√≥n del apartado anterior.
 
 ```{r}
 ### Inserta aqui tu codigo
+cols<-rainbow(max(comms$membership))[comms$membership]
+
+ll<-layout.fruchterman.reingold(conn_g)
+
+png("tt.png",width=1200, height=1200, res=100)
+plot(conn_g,layout=ll,vertex.label="",
+     vertex.color=cols,
+     vertex.size=log(bets+2))
+#dev.off()
 ```
 
 
 ## Difundiendo un rumor (o un virus) en la componente conexa mayor (4 puntos)
 
-Este apartado es el que m·s peso en la pr·ctica tiene. Vamos a implementar un modelo epidemiolÛgico sobre el grafo que, tÌpicamente, se utiliza para simular escenarios de difusiÛn de enfermedades pero tambiÈn en contextos como la distribuciÛn de rumoeres e informaciÛn. Vamos a implementar un modelo SIR que se caracteriza por tener los siguientes par·metros:
+Este apartado es el que m√°s peso en la pr√°ctica tiene. Vamos a implementar un modelo epidemiol√≥gico sobre el grafo que, t√≠picamente, se utiliza para simular escenarios de difusi√≥n de enfermedades pero tambi√©n en contextos como la distribuci√≥n de rumoeres e informaci√≥n. Vamos a implementar un modelo SIR que se caracteriza por tener los siguientes par√°metros:
 
-* N˙mero de nodos iniciales infectados en el momento t=0 (N).
+* N√∫mero de nodos iniciales infectados en el momento t=0 (N).
 * Beta: probabilidad de contagio de un nodo infectado (I) a un nodo susceptible de serlo (S)
 * Gamma: probabilidad de que un nodo infectado (I) se recupere en momenteo actual (R). Los nodos en estado (R) no son susceptibles y permanecen en este estado infinitamente.
 
-Se pide desarrollar una funciÛn que tenga como par·metros los tres valores anteriores y un cuarto que sea un grafo que, en nuestro caso, ser· la componente conexa mayor del grafo original de esta pr·ctica. Dicha funciÛn simular· el proceso SIR:
+Se pide desarrollar una funci√≥n que tenga como par√°metros los tres valores anteriores y un cuarto que sea un grafo que, en nuestro caso, ser√° la componente conexa mayor del grafo original de esta pr√°ctica. Dicha funci√≥n simular√° el proceso SIR:
 
-* En t=0, se seleccionan N nodos al azar, que pasar·n a estado infectado.
-* En t=1, se podr·n contagiar con probabilidad Beta nodos que tienen un vecino infectado; OJO: si un nodo en estado S tiene varios vecinos en estado I tiene m·s probabilidad de infectarse ya que cada vecino tendr· un intento de infectarle.
+* En t=0, se seleccionan N nodos al azar, que pasar√°n a estado infectado.
+* En t=1, se podr√°n contagiar con probabilidad Beta nodos que tienen un vecino infectado; OJO: si un nodo en estado S tiene varios vecinos en estado I tiene m√°s probabilidad de infectarse ya que cada vecino tendr√° un intento de infectarle.
 * Se repite el paso anterior sucesivamente, hasta que no vemos infectados nuevos durante, al menos, 3 iteraciones.
 
-Se pide ejecutar una simulaciÛn para tres o cuatro valores del par·metro beta (N y gamma pueden ser fijos en estas simulaciones) de este proceso de manera que se pueda visualizar:
+Se pide ejecutar una simulaci√≥n para tres o cuatro valores del par√°metro beta (N y gamma pueden ser fijos en estas simulaciones) de este proceso de manera que se pueda visualizar:
 
-* La curva de nuevos infectados en escala logarÌtmica para cada caso.
-* El grafo que surge de la cascada de contagios: es decir, dos nodos est·n enlazados ahora si uno ha contagiado al otro. Como es lÛgico, tanto los nodos como los enlaces de este nuevo grafo son un subconjunto del grafo original.
+* La curva de nuevos infectados en escala logar√≠tmica para cada caso.
+* El grafo que surge de la cascada de contagios: es decir, dos nodos est√°n enlazados ahora si uno ha contagiado al otro. Como es l√≥gico, tanto los nodos como los enlaces de este nuevo grafo son un subconjunto del grafo original.
  
 ```{r}
 ### Inserta aqui tu codigo
