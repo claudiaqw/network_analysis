@@ -33,8 +33,14 @@ library(ggplot2)
 ### Inserta aqui tu codigo
 dd <- read.csv("red_contactos.csv", sep=';')
 g<-graph.data.frame(dd, directed=FALSE)
-summary(g)
+length(V(g))
+length(E(g))
 ```
+
+<span style="color: blue;">
+En este apartado comprobamos que efectivamente el gráfico contiene ciclos. Para transformarlo creamos a una propiedad *weight* en cada una de las aristas y le asignamos valor 1. Luego, eliminamos los ciclos sumando la propiedad *weight* para asignar como peso la cantidad de aristas que existían. 
+</span>
+
 ```{r}
 sum(is.loop(g))
 
@@ -46,7 +52,10 @@ sum(is.loop(g))
 ```
 ## Selección de la componente conexa mayor (0,5 puntos)
 
-En este apartado, se pide realizar los pasos adecuados para generar un nuevo objeto grafo, que sea conexo, y que involucre a todos los nodos y enlaces de la componente conexa mayor del grafo original.
+<span style="color: blue;">
+En este punto, se pide realizar los pasos adecuados para generar un nuevo objeto grafo, que sea conexo, y que involucre a todos los nodos y enlaces de la componente conexa mayor del grafo original.
+
+</span>
 
 ```{r}
 ### Inserta aqui tu codigo
@@ -74,8 +83,6 @@ En este apartado, se pide analizar descriptivamente el grafo usando los concepto
 
 
 ```{r}
-### Inserta aqui tu codigo
-
 #grado medio
 mean(degree(conn_g))
 
@@ -84,24 +91,34 @@ average.path.length(conn_g)
 
 #diametro
 diameter(conn_g)
+```
 
-#grade distribution
+<span style="color: blue;">
+
+Para representar la distribución del subgrafo conexo ...
+
+</span>
+
+```{r}
+#grade distribution # Power-law #TODO
 df <- data.frame(degree = degree(conn_g))
 ggplot(df) +
   geom_bar(aes(x=degree))
 
-
-
 deg.dist <- degree_distribution(conn_g, cumulative=T, mode="all")
 deg <- degree(conn_g)
 plot(x=0:max(deg), y=1-deg.dist, pch=19, cex=1.2, col="orange", xlab="Degree", ylab="Cumulative Frequency")
+```
 
+<span style="color: blue;">
 
-# Power-law #TODO
+Una Power-law es la probabilidad de encontrar un nodo con grado k es k a la algo
 
+</span>
 
+```{r}
 # Clustering
-components <- clusters(conn_g, mode="weak")
+components <- clusters(conn_g, mode="strong")
 components$csize
 components$no
 ```
@@ -116,6 +133,7 @@ diversity = diversity(conn_g, weights = NULL, vids = V(conn_g))
 <span style="color: blue;">La centralidad de un nodo se puede calcular de diversas maneras. En este caso, se interpreta como la cantidad de veces que un nodo aparece en el camino mínimo entre dos otros nodos. </span>
 
 ```{r}
+#centrality
 bets<-betweenness(conn_g,directed=FALSE)
 clos<-closeness(conn_g)
 mean(bets)
@@ -161,7 +179,7 @@ plot(conn_g,layout=ll,vertex.label="",
 
 ## Difundiendo un rumor (o un virus) en la componente conexa mayor (4 puntos)
 
-Este apartado es el que más peso en la práctica tiene. Vamos a implementar un modelo epidemiológico sobre el grafo que, típicamente, se utiliza para simular escenarios de difusión de enfermedades pero también en contextos como la distribución de rumoeres e información. Vamos a implementar un modelo SIR que se caracteriza por tener los siguientes parámetros:
+Este apartado es el que más peso en la práctica tiene. Vamos a implementar un modelo epidemiológico sobre el grafo que, típicamente, se utiliza para simular escenarios de difusión de enfermedades pero también en contextos como la distribución de rumores e información. Vamos a implementar un modelo SIR que se caracteriza por tener los siguientes parámetros:
 
 * Número de nodos iniciales infectados en el momento t=0 (N).
 * Beta: probabilidad de contagio de un nodo infectado (I) a un nodo susceptible de serlo (S)
@@ -178,7 +196,154 @@ Se pide ejecutar una simulación para tres o cuatro valores del parámetro beta 
 * La curva de nuevos infectados en escala logarítmica para cada caso.
 * El grafo que surge de la cascada de contagios: es decir, dos nodos están enlazados ahora si uno ha contagiado al otro. Como es lógico, tanto los nodos como los enlaces de este nuevo grafo son un subconjunto del grafo original.
  
+<span style="color:blue"> El modelo SIR estima el número de individuos susceptibles a infectarse (S), el número de individuos infectados capaces de infectar (I) y el número de individuos recuperados (que se curaron o fallecieron) (R), donde *beta* puede ser interpretado como la probabilidad de transmisión y *gamma* como la probabilidad de recuperación.</span>
+
+<span style="color:blue"> Para el diseño del algoritmo se tuvieron en cuenta las siguientes consideraciones:</span>
+
+* <span style="color:blue">Que un nodo esté directamente conectado a través de una arista con otro nodo se interpreta en este contexto como un "contacto estrecho".</span>
+* <span style="color:blue">Un nodo susceptibe puede convertirse en infectado en un momento t+1, si tiene al menos un vecino que está infectado en el momento *t*.</span>
+* <span style="color:blue">Un nodo en el tiempo t tiene la posibilidad de recuperarse o infectar a otros. De manera que, si un nodo se recupera en un tiempo t no puede contagiar a ningún otro.</span>
+</span>
+
+<span style="color:blue">A continuación se explica detalladamente el algoritmo diseñado para simular la difusión de una epidemia</span>
+
+1. <span style="color:blue">Inicialmente, se agrega una propiedad **state** a cada nodo del grafo que indica el estado actual y que puede tomar valores {S, I, R} para denotar que el nodo está Infectado, Susceptible o Recuperado.</span>
+2. <span style="color:blue">Al inicio todos los nodos son suceptibles, no hay nadie infectado. Para simular el inicio de la epidemia se seleccionan N nodos aleatorios cuyo estado pasa a ser Infectado.</span>
+3. <span style="color:blue">Durante la ejecución se almacenan en las variables *infected_hist*, *susceptible_hist* y *recovered_hist* el histórico de casos infectados, susceptibles y recuperados respectivamente.</span>
+4. <span style="color:blue">En cada tiempo *t*, se itera por todos los nodos infectados. Una vez que estamos analizando un nodo infectado en el momento *t* pueden ocurrir tres cosas: que se recupere, que infecte a algunos de sus vecinos susceptibles o que no contagie a nadie porque no esté conectado con ningún susceptible.</span>
+5. <span style="color:blue">Para simular una recuperación de un nodo se genera una probabilidad *prob_rec* aleatoria además del parámetro gamma. De manera que, un nodo infectado se recupera si $prob\_rec * gamma$ es mayor que un *threshold*, en este caso, 0.5. La introducción de esta aleatoriedad permite que no todos los nodos tengan la misma capacidad de recuperación, incluso, un mismo nodo, según el momento en que se encuentre puede tener una probabilidad u otra.</span>
+6. <span style="color:blue">Por otra parte, para simular la posibilidad de infección se genera una probabilidad *prob_infect* para cada uno de los vecinos de un nodo *n*. De manera que, un nodo susceptible se contagia si la multiplicación de su *prob_infect* y beta es mayor que 0.5. En un escenario pandémico real, esta probabilidad generada se puede interpretar como el nivel de contacto con un infectado, puesto que no todos los contactos (en este caso, vecinos) tienen por qué tener el mismo tipo de contacto.</span>
+
+
+Es importante resaltar, que el valor de la tasa de infección o transmisión está relacionado, por un lado, con el número de contactos por unidad de tiempo y, por otro lado, con la probabilidad de contagio.
+
+</span>
+
+
 ```{r}
-### Inserta aqui tu codigo
+
+difusion_simulator <- function(N, beta, gamma, g)
+{
+  V(g)$state <- 'S'
+  
+  # t=0
+  infected_index <- sample.int(length(V(g)), N)
+  V(g)[infected_index]$state <- 'I'
+  
+  infected_nodes <- V(g)[infected_index]
+  
+  infected_hist <- c(N)
+  susceptible_hist <- c(length(V(g)))
+  recovered_hist <- c(0)
+  
+  t = 1
+  times <- 0
+  while(times < 3)
+  {
+    print(paste0("t = ", t))
+    t = t + 1
+    
+    flag <- FALSE
+    for (index in infected_nodes) 
+    {
+      node = V(g)[index]
+      print(paste0("Analizando nodo ", node$name))
+      prob_rec <- runif(1) * gamma
+      if (prob_rec >= 0.5) ## si un nodo en el tiempo t se recupera, no tiene sentido que infecte
+      {
+        # print(paste0('Recuperado nodo ', node$name))
+        flag <- TRUE
+        V(g)[index]$state <-'R'
+        
+      }
+      else
+      {
+        neig <- neighbors(g, node)  # los vecinos del nodo infectado
+        susc_neighbors <- neig[neig$state == 'S']
+        n <- length(susc_neighbors)
+        n_prob <- runif(n) # genera un vector de tamaño n (vecinos susceptibles)
+        if (n > 0)
+        {
+          for (i in c(1:n))
+          {
+            susc_node = susc_neighbors[i]
+            prob_infect <- beta * n_prob[i]
+            
+            if (prob_infect >= 0.5)
+            {
+              # print(paste0("Infectado nodo ", susc_node$name))
+              V(g)[V(g)$name == susc_node$name]$state = 'I'
+              flag <- TRUE
+            }
+          }
+        }
+      }
+    }
+    if (flag == FALSE) #no hubo cambios en t, aumentamos el contador
+    {
+      times = times + 1
+      
+    }
+    else # hubo cambios en el tiempo t
+    {
+        times = 0
+        flag= FALSE
+    }
+    
+    infected_nodes = V(g)[V(g)$state == 'I']
+    infected_hist <- c(infected_hist, length(infected_nodes))
+    susceptible_hist <- c(susceptible_hist, length(V(g)[V(g)$state == 'S']))
+    recovered_hist <- c(recovered_hist, length(V(g)[V(g)$state == 'R']))
+  }
+  
+  return (g)
+}
+
 ```
+
+Se ejcuta el algoritmo con N = 10
+
+```{r}
+new_g = difusion_simulator(10, 0.5, 0.6, conn_g)
+
+```
+
+N = 50
+```{r}
+
+```
+
+N = 100
+
+```{r}
+
+```
+
+
+```{r}
+cols<-rainbow(3)
+
+ll<-layout.fruchterman.reingold(conn_g)
+
+png("b.png",width=1200, height=1200, res=100)
+plot(conn_g,layout=ll,vertex.label="state",
+     vertex.color=cols,
+     vertex.size=log(bets+2))
+
+```
+
+
+```{r}
+cols<-rainbow(3)
+
+ll<-layout.fruchterman.reingold(new_g)
+
+png("a.png",width=1200, height=1200, res=100)
+plot(new_g,layout=ll,vertex.label="",
+     vertex.color=cols,
+     vertex.size=log(bets+2))
+
+```
+
+
 

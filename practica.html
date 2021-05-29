@@ -1655,7 +1655,7 @@ pre code {
 dd &lt;- read.csv(&quot;red_contactos.csv&quot;, sep=&#39;;&#39;)
 g&lt;-graph.data.frame(dd, directed=FALSE)
 summary(g)</code></pre>
-<pre><code>## IGRAPH 1ec383a UN-- 1390 222744 -- 
+<pre><code>## IGRAPH a58207b UN-- 1390 222744 -- 
 ## + attr: name (v/c)</code></pre>
 <pre class="r"><code>sum(is.loop(g))</code></pre>
 <pre><code>## [1] 39627</code></pre>
@@ -1702,7 +1702,7 @@ average.path.length(conn_g)</code></pre>
 <pre class="r"><code>#diametro
 diameter(conn_g)</code></pre>
 <pre><code>## [1] 14</code></pre>
-<pre class="r"><code>#grade distribution
+<pre class="r"><code>#grade distribution # Power-law #TODO
 df &lt;- data.frame(degree = degree(conn_g))
 ggplot(df) +
   geom_bar(aes(x=degree))</code></pre>
@@ -1711,11 +1711,11 @@ ggplot(df) +
 deg &lt;- degree(conn_g)
 plot(x=0:max(deg), y=1-deg.dist, pch=19, cex=1.2, col=&quot;orange&quot;, xlab=&quot;Degree&quot;, ylab=&quot;Cumulative Frequency&quot;)</code></pre>
 <p><img src="data:image/png;base64,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" width="672" /></p>
-<pre class="r"><code># Power-law #TODO
-
-
-# Clustering
-components &lt;- clusters(conn_g, mode=&quot;weak&quot;)
+<p><span style="color: blue;"></p>
+<p>Una Power-law es la probabilidad de encontrar un nodo con grado k es k a la algo</p>
+<p></span></p>
+<pre class="r"><code># Clustering
+components &lt;- clusters(conn_g, mode=&quot;strong&quot;)
 components$csize</code></pre>
 <pre><code>## [1] 1388</code></pre>
 <pre class="r"><code>components$no</code></pre>
@@ -1724,7 +1724,8 @@ components$csize</code></pre>
 <pre class="r"><code># entropy
 diversity = diversity(conn_g, weights = NULL, vids = V(conn_g))</code></pre>
 <p><span style="color: blue;">La centralidad de un nodo se puede calcular de diversas maneras. En este caso, se interpreta como la cantidad de veces que un nodo aparece en el camino mínimo entre dos otros nodos. </span></p>
-<pre class="r"><code>bets&lt;-betweenness(conn_g,directed=FALSE)
+<pre class="r"><code>#centrality
+bets&lt;-betweenness(conn_g,directed=FALSE)
 clos&lt;-closeness(conn_g)
 mean(bets)</code></pre>
 <pre><code>## [1] 1227.296</code></pre>
@@ -1732,16 +1733,34 @@ mean(bets)</code></pre>
 <div id="análisis-de-comunidades-de-la-componente-conexa-mayor-15-puntos" class="section level2">
 <h2>Análisis de comunidades de la componente conexa mayor (1,5 puntos)</h2>
 <p>En este apartado, se pide aplicar dos algoritmos de detección de comunidades, compararlos y seleccionar cuál es, en tu opinión, el que da una mejor respuesta. Razona tu selección.</p>
-<pre class="r"><code>### Inserta aqui tu codigo</code></pre>
+<pre class="r"><code>comms&lt;-fastgreedy.community(conn_g) #greedy
+modularity(comms)</code></pre>
+<pre><code>## [1] 0.4970707</code></pre>
+<pre class="r"><code>comms2&lt;-infomap.community(conn_g)
+comms3&lt;-walktrap.community(conn_g)
+comms4&lt;-label.propagation.community(conn_g)
+comms5&lt;-multilevel.community(conn_g)
+
+compare(comm1 = comms, comm2 = comms2,method = &quot;nmi&quot;)</code></pre>
+<pre><code>## [1] 0.7385476</code></pre>
 </div>
 <div id="visualización-del-grafo-por-comunidades-de-la-componente-conexa-mayor-15-puntos" class="section level2">
 <h2>Visualización del grafo por comunidades de la componente conexa mayor (1,5 puntos)</h2>
 <p>En este apartado, se pide visualizar el grafo coloreando cada nodo en función de la comunidad a la que pertenezca, según tu elección del apartado anterior.</p>
-<pre class="r"><code>### Inserta aqui tu codigo</code></pre>
+<pre class="r"><code>### Inserta aqui tu codigo
+cols&lt;-rainbow(max(comms$membership))[comms$membership]
+
+ll&lt;-layout.fruchterman.reingold(conn_g)
+
+png(&quot;tt.png&quot;,width=1200, height=1200, res=100)
+plot(conn_g,layout=ll,vertex.label=&quot;&quot;,
+     vertex.color=cols,
+     vertex.size=log(bets+2))
+#dev.off()</code></pre>
 </div>
 <div id="difundiendo-un-rumor-o-un-virus-en-la-componente-conexa-mayor-4-puntos" class="section level2">
 <h2>Difundiendo un rumor (o un virus) en la componente conexa mayor (4 puntos)</h2>
-<p>Este apartado es el que más peso en la práctica tiene. Vamos a implementar un modelo epidemiológico sobre el grafo que, típicamente, se utiliza para simular escenarios de difusión de enfermedades pero también en contextos como la distribución de rumoeres e información. Vamos a implementar un modelo SIR que se caracteriza por tener los siguientes parámetros:</p>
+<p>Este apartado es el que más peso en la práctica tiene. Vamos a implementar un modelo epidemiológico sobre el grafo que, típicamente, se utiliza para simular escenarios de difusión de enfermedades pero también en contextos como la distribución de rumores e información. Vamos a implementar un modelo SIR que se caracteriza por tener los siguientes parámetros:</p>
 <ul>
 <li>Número de nodos iniciales infectados en el momento t=0 (N).</li>
 <li>Beta: probabilidad de contagio de un nodo infectado (I) a un nodo susceptible de serlo (S)</li>
@@ -1758,7 +1777,170 @@ mean(bets)</code></pre>
 <li>La curva de nuevos infectados en escala logarítmica para cada caso.</li>
 <li>El grafo que surge de la cascada de contagios: es decir, dos nodos están enlazados ahora si uno ha contagiado al otro. Como es lógico, tanto los nodos como los enlaces de este nuevo grafo son un subconjunto del grafo original.</li>
 </ul>
-<pre class="r"><code>### Inserta aqui tu codigo</code></pre>
+<p><span style="color:blue"> El modelo SIR estima el número de individuos susceptibles a infectarse (S), el número de individuos infectados capaces de infectar (I) y el número de individuos recuperados (que se curaron o fallecieron) (R), donde <em>beta</em> puede ser interpretado como la probabilidad de transmisión y <em>gamma</em> como la probabilidad de recuperación.</span></p>
+<p><span style="color:blue"> Para el diseño del algoritmo se tuvieron en cuenta las siguientes consideraciones:</span></p>
+<ul>
+<li><span style="color:blue">Que un nodo esté directamente conectado a través de una arista con otro nodo se interpreta en este contexto como un “contacto estrecho”.</span></li>
+<li><span style="color:blue">Un nodo susceptibe puede convertirse en infectado en un momento t+1, si tiene al menos un vecino que está infectado en el momento <em>t</em>.</span></li>
+<li><span style="color:blue">Un nodo en el tiempo t tiene la posibilidad de recuperarse o infectar a otros. De manera que, si un nodo se recupera en un tiempo t no puede contagiar a ningún otro.</span> </span></li>
+</ul>
+<p><span style="color:blue">A continuación se explica detalladamente el algoritmo diseñado para simular la difusión de una epidemia</span></p>
+<ol style="list-style-type: decimal">
+<li><span style="color:blue">Inicialmente, se agrega una propiedad <strong>state</strong> a cada nodo del grafo que indica el estado actual y que puede tomar valores {S, I, R} para denotar que el nodo está Infectado, Susceptible o Recuperado.</span></li>
+<li><span style="color:blue">Al inicio todos los nodos son suceptibles, no hay nadie infectado. Para simular el inicio de la epidemia se seleccionan N nodos aleatorios cuyo estado pasa a ser Infectado.</span></li>
+<li><span style="color:blue">Durante la ejecución se almacenan en las variables <em>infected_hist</em>, <em>susceptible_hist</em> y <em>recovered_hist</em> el histórico de casos infectados, susceptibles y recuperados respectivamente.</span></li>
+<li><span style="color:blue">En cada tiempo <em>t</em>, se itera por todos los nodos infectados. Una vez que estamos analizando un nodo infectado en el momento <em>t</em> pueden ocurrir tres cosas: que se recupere, que infecte a algunos de sus vecinos susceptibles o que no contagie a nadie porque no esté conectado con ningún susceptible.</span></li>
+<li><span style="color:blue">Para simular una recuperación de un nodo se genera una probabilidad <em>prob_rec</em> aleatoria además del parámetro gamma. De manera que, un nodo infectado se recupera si <span class="math inline">\(prob\_rec * gamma\)</span> es mayor que un <em>threshold</em>, en este caso, 0.5. La introducción de esta aleatoriedad permite que no todos los nodos tengan la misma capacidad de recuperación, incluso, un mismo nodo, según el momento en que se encuentre puede tener una probabilidad u otra.</span></li>
+<li><span style="color:blue">Por otra parte, para simular la posibilidad de infección se genera una probabilidad <em>prob_infect</em> para cada uno de los vecinos de un nodo <em>n</em>. De manera que, un nodo susceptible se contagia si la multiplicación de su <em>prob_infect</em> y beta es mayor que 0.5. En un escenario pandémico real, esta probabilidad generada se puede interpretar como el nivel de contacto con un infectado, puesto que no todos los contactos (en este caso, vecinos) tienen por qué tener el mismo tipo de contacto.</span></li>
+</ol>
+<p>Es importante resaltar, que el valor de la tasa de infección o transmisión está relacionado, por un lado, con el número de contactos por unidad de tiempo y, por otro lado, con la probabilidad de contagio.</p>
+<p></span></p>
+<pre class="r"><code>difusion_simulator &lt;- function(N, beta, gamma, g)
+{
+  V(g)$state &lt;- &#39;S&#39;
+  
+  # t=0
+  infected_index &lt;- sample.int(length(V(g)), N)
+  V(g)[infected_index]$state &lt;- &#39;I&#39;
+  
+  infected_nodes &lt;- V(g)[infected_index]
+  
+  infected_hist &lt;- c(N)
+  susceptible_hist &lt;- c(length(V(g)))
+  recovered_hist &lt;- c(0)
+  
+  t = 1
+  times &lt;- 0
+  while(times &lt; 3)
+  {
+    print(paste0(&quot;t = &quot;, t))
+    t = t + 1
+    
+    flag &lt;- FALSE
+    for (index in infected_nodes) 
+    {
+      node = V(g)[index]
+      print(paste0(&quot;Analizando nodo &quot;, node$name))
+      prob_rec &lt;- runif(1) * gamma
+      if (prob_rec &gt;= 0.5) ## si un nodo en el tiempo t se recupera, no tiene sentido que infecte
+      {
+        # print(paste0(&#39;Recuperado nodo &#39;, node$name))
+        flag &lt;- TRUE
+        V(g)[index]$state &lt;-&#39;R&#39;
+        
+      }
+      else
+      {
+        neig &lt;- neighbors(g, node)  # los vecinos del nodo infectado
+        susc_neighbors &lt;- neig[neig$state == &#39;S&#39;]
+        n &lt;- length(susc_neighbors)
+        n_prob &lt;- runif(n) # genera un vector de tamaño n (vecinos susceptibles)
+        if (n &gt; 0)
+        {
+          for (i in c(1:n))
+          {
+            susc_node = susc_neighbors[i]
+            prob_infect &lt;- beta * n_prob[i]
+            
+            if (prob_infect &gt;= 0.5)
+            {
+              # print(paste0(&quot;Infectado nodo &quot;, susc_node$name))
+              V(g)[V(g)$name == susc_node$name]$state = &#39;I&#39;
+              flag &lt;- TRUE
+            }
+          }
+        }
+      }
+    }
+    
+    if (flag == FALSE) #no hubo cambios en t, aumentamos el contador
+    {
+      times = times + 1
+      
+    }
+    else # hubo cambios en el tiempo t
+    {
+        times = 0
+        flag= FALSE
+    }
+    
+    infected_nodes = V(g)[V(g)$state == &#39;I&#39;]
+    infected_hist &lt;- c(infected_hist, length(infected_nodes))
+    susceptible_hist &lt;- c(susceptible_hist, length(V(g)[V(g)$state == &#39;S&#39;]))
+    recovered_hist &lt;- c(recovered_hist, length(V(g)[V(g)$state == &#39;R&#39;]))
+  }
+  
+  return (g)
+}</code></pre>
+<p>Se ejcuta el algoritmo con N = 10</p>
+<pre class="r"><code>new_g = difusion_simulator(10, 0.5, 0.6, conn_g)</code></pre>
+<pre><code>## [1] &quot;t = 1&quot;
+## [1] &quot;Analizando nodo 45-064-000&quot;
+## [1] &quot;Analizando nodo 005-013&quot;
+## [1] &quot;Analizando nodo 079-16-446&quot;
+## [1] &quot;Analizando nodo 079-02-031&quot;
+## [1] &quot;Analizando nodo 115-006&quot;
+## [1] &quot;Analizando nodo 079-12-317&quot;
+## [1] &quot;Analizando nodo 079-20-563&quot;
+## [1] &quot;Analizando nodo 079-10-258&quot;
+## [1] &quot;Analizando nodo 079-06-109B&quot;
+## [1] &quot;Analizando nodo 079-01-020&quot;
+## [1] &quot;t = 2&quot;
+## [1] &quot;Analizando nodo 005-013&quot;
+## [1] &quot;Analizando nodo 079-02-031&quot;
+## [1] &quot;Analizando nodo 079-01-020&quot;
+## [1] &quot;Analizando nodo 079-20-563&quot;
+## [1] &quot;Analizando nodo 079-10-258&quot;
+## [1] &quot;Analizando nodo 115-006&quot;
+## [1] &quot;Analizando nodo 079-16-446&quot;
+## [1] &quot;Analizando nodo 45-064-000&quot;
+## [1] &quot;t = 3&quot;
+## [1] &quot;Analizando nodo 005-013&quot;
+## [1] &quot;Analizando nodo 079-02-031&quot;
+## [1] &quot;Analizando nodo 079-10-258&quot;
+## [1] &quot;Analizando nodo 115-006&quot;
+## [1] &quot;Analizando nodo 079-16-446&quot;
+## [1] &quot;Analizando nodo 45-064-000&quot;
+## [1] &quot;t = 4&quot;
+## [1] &quot;Analizando nodo 005-013&quot;
+## [1] &quot;Analizando nodo 079-02-031&quot;
+## [1] &quot;Analizando nodo 079-10-258&quot;
+## [1] &quot;Analizando nodo 115-006&quot;
+## [1] &quot;Analizando nodo 079-16-446&quot;
+## [1] &quot;Analizando nodo 45-064-000&quot;
+## [1] &quot;t = 5&quot;
+## [1] &quot;Analizando nodo 005-013&quot;
+## [1] &quot;Analizando nodo 079-02-031&quot;
+## [1] &quot;Analizando nodo 115-006&quot;
+## [1] &quot;Analizando nodo 45-064-000&quot;
+## [1] &quot;t = 6&quot;
+## [1] &quot;Analizando nodo 005-013&quot;
+## [1] &quot;Analizando nodo 115-006&quot;
+## [1] &quot;Analizando nodo 45-064-000&quot;
+## [1] &quot;t = 7&quot;
+## [1] &quot;Analizando nodo 115-006&quot;
+## [1] &quot;t = 8&quot;
+## [1] &quot;Analizando nodo 115-006&quot;
+## [1] &quot;t = 9&quot;
+## [1] &quot;Analizando nodo 115-006&quot;</code></pre>
+<p>N = 50</p>
+<p>N = 100</p>
+<pre class="r"><code>cols&lt;-rainbow(3)
+
+ll&lt;-layout.fruchterman.reingold(conn_g)
+
+png(&quot;b.png&quot;,width=1200, height=1200, res=100)
+plot(conn_g,layout=ll,vertex.label=&quot;state&quot;,
+     vertex.color=cols,
+     vertex.size=log(bets+2))</code></pre>
+<pre class="r"><code>cols&lt;-rainbow(3)
+
+ll&lt;-layout.fruchterman.reingold(new_g)
+
+png(&quot;a.png&quot;,width=1200, height=1200, res=100)
+plot(new_g,layout=ll,vertex.label=&quot;&quot;,
+     vertex.color=cols,
+     vertex.size=log(bets+2))</code></pre>
 </div>
 
 
