@@ -28,13 +28,14 @@ library(igraph)
 library(ggplot2)
 ```
 
+<span style="color: blue;"> Primeramente se carga el grafo en memoria y se comprueba la cantidad de aristas y nodos. Asimismo se calcula la densidad del grafo original. </span>
 
 ```{r}
-### Inserta aqui tu codigo
 dd <- read.csv("red_contactos.csv", sep=';')
 g<-graph.data.frame(dd, directed=FALSE)
-length(V(g))
-length(E(g))
+vcount(g)
+ecount(g)
+graph.density(g)
 ```
 
 <span style="color: blue;">
@@ -58,7 +59,6 @@ En este punto, se pide realizar los pasos adecuados para generar un nuevo objeto
 </span>
 
 ```{r}
-### Inserta aqui tu codigo
 is.connected(g)
 components <- clusters(g, mode="weak")
 biggest_cluster_id <- which.max(components$csize)
@@ -67,7 +67,6 @@ vert_ids <- V(g)[components$membership == biggest_cluster_id]
 conn_g <- induced_subgraph(g, vids=vert_ids)
 is.connected(conn_g)
 ```
-
 
 ## Análisis descriptivo de la componente conexa mayor (2,5 puntos)
 
@@ -82,6 +81,9 @@ En este apartado, se pide analizar descriptivamente el grafo usando los concepto
 * Centralidad de los nodos y comparación con métricas de grado y clustering
 
 
+<span style="color: blue;"> En el próximo fragmento de código se puede observar que el grafo tiene un gradio medio aproximado a 78, lo que implica, que cada nodo en media está conectado con 78 más. Asimismo, se puede notar que la distancia media es de aproximadamente 3 y el diámetro, 6.
+</span>
+
 ```{r}
 #grado medio
 mean(degree(conn_g))
@@ -93,28 +95,60 @@ average.path.length(conn_g)
 diameter(conn_g)
 ```
 
-<span style="color: blue;">
-
-Para representar la distribución del subgrafo conexo ...
-
-</span>
+<span style="color: blue;"> La distribución de los grados de la mayor componente conexa del grafo inicial se visualiza en un histograma, que muestra que gran parte de los nodos tienen grado menor que 150.</span>
 
 ```{r}
-#grade distribution # Power-law #TODO
-df <- data.frame(degree = degree(conn_g))
-ggplot(df) +
-  geom_bar(aes(x=degree))
-
-deg.dist <- degree_distribution(conn_g, cumulative=T, mode="all")
-deg <- degree(conn_g)
-plot(x=0:max(deg), y=1-deg.dist, pch=19, cex=1.2, col="orange", xlab="Degree", ylab="Cumulative Frequency")
+d = degree(conn_g, mode = "all")
+hist(d)
 ```
 
-<span style="color: blue;">
+<span style="color: blue;"> El siguiente gráfico muestra la distribución de los grados en función del logaritmo. </span>
 
-Una Power-law es la probabilidad de encontrar un nodo con grado k es k a la algo
+```{r}
+plot_degree_distribution = function(graph) {
+    d = degree(graph, mode = "all")
+    dd = degree.distribution(graph, mode = "all", cumulative = FALSE)
+    degree = 1:max(d)
+    probability = dd[-1]
+    nonzero.position = which(probability != 0)
+    probability = probability[nonzero.position]
+    degree = degree[nonzero.position]
+    plot(probability ~ degree, log = "xy", xlab = "Degree (log)", ylab = "Probability (log)", 
+        col = 1, main = "Degree Distribution")
+}
 
-</span>
+plot_degree_distribution(conn_g)
+```
+
+<span style="color: blue;"> En la siguiente gráfica se muestra el ajuste Power-Law teniendo en cuenta la distribución de grados antes vista.</span>
+
+```{r}
+
+fit_power_law = function(graph) {
+    d = degree(graph, mode = "all")
+    dd = degree.distribution(graph, mode = "all", cumulative = FALSE)
+    degree = 1:max(d)
+    probability = dd[-1]
+    nonzero.position = which(probability != 0)
+    probability = probability[nonzero.position]
+    degree = degree[nonzero.position]
+    reg = lm(log(probability) ~ log(degree))
+    cozf = coef(reg)
+    power.law.fit = function(x) exp(cozf[[1]] + cozf[[2]] * log(x))
+    alpha = -cozf[[2]]
+    R.square = summary(reg)$r.squared
+    print(paste("Alpha =", round(alpha, 3)))
+    print(paste("R square =", round(R.square, 3)))
+    plot(probability ~ degree, log = "xy", xlab = "Degree (log)", ylab = "Probability (log)", 
+        col = 1, main = "Degree Distribution")
+    curve(power.law.fit, col = "red", add = T, n = length(d))
+}
+
+fit_power_law(conn_g)
+
+```
+
+<span style="color: blue;"> Un algoritmo de agrupamiento encuentra una asociación de los nodos a diferentes grupos según la cantidad de enlaces entre ellos. En este caso, se puede notar que la componente conexa mayor es fuertemente conexa, lo que quiere decir que existe un camino entre todo par de nodos. </span>
 
 ```{r}
 # Clustering
@@ -123,19 +157,17 @@ components$csize
 components$no
 ```
 
-<span style="color: blue;">La entropía de un grafo ...</span>
+<span style="color: blue;">La entropía de un grafo puede ser interpretada como la diversidad de un grafo, de manera que, permite tener una noción de la intensidad de los nodos en función de la cantidad de enlaces. Para resolver este punto se utiliza la función *diversity* que calcula una medida de diversidad para todos los vertices, de manera que la salida es un vector del tamaño de la cantidad de nodos de la red. </span>
 
 ```{r}
 # entropy
-diversity = diversity(conn_g, weights = NULL, vids = V(conn_g))
+diversit = diversity(conn_g)
 ```
-
-<span style="color: blue;">La centralidad de un nodo se puede calcular de diversas maneras. En este caso, se interpreta como la cantidad de veces que un nodo aparece en el camino mínimo entre dos otros nodos. </span>
+<span style="color: blue;">La centralidad de un nodo se puede calcular de diversas manerasy puede ser interpretada como la importancia de un nodo en la red.. En este caso, se calcula como la cantidad de veces que un nodo aparece en el camino mínimo entre dos otros nodos. Esta métrica está relacionada con el grado de los nodos de manera, que mientras más grande es el grado medio de un grafo, más grande debiera ser la centralidad media. </span>
 
 ```{r}
 #centrality
 bets<-betweenness(conn_g,directed=FALSE)
-clos<-closeness(conn_g)
 mean(bets)
 ```
 
@@ -144,19 +176,37 @@ mean(bets)
 
 En este apartado, se pide aplicar dos algoritmos de detección de comunidades, compararlos y seleccionar cuál es, en tu opinión, el que da una mejor respuesta. Razona tu selección.
 
+<span style="color: blue;"> El objetivo de encontrar comunidades es identificar los nodos que están más densamente conectados. Un criterio de evaluación para evaluar la salida de dos algoritmos de detección de comunidades es en función de la densidad intra/extra comunitaria. Se espera de una comunidad adecuada que la densidad intra-comunidad sea sea mayor que la externa, es decir, que tenga mayor interacción con los nodos que se encuentran dentro de la comunidad que con los de fuera.
+</span>
+
+<span style="color: blue;"> Sin embargo, si bien este criterio nos da una idea de la distancia entre nodos no nos dice nada sobre la estructura de la red. Por esta razón utilizaremos como métrica de comparación la modularidad, puesto que todos los algoritmos se centran en maximizarla, de manera que una valor de modularidad grande indica que la estructura es más clara y mejor la partición lograda.
+</span>
+
+<span style="color: blue;">
+Los algoritmo seleccionados son en Greedy y el Multilevel. 
+
+</span>
 ```{r}
-comms<-fastgreedy.community(conn_g) #greedy
-modularity(comms)
+c1<-fastgreedy.community(conn_g) #greedy
+length(c1)
+sizes(c1)
+modularity(c1)
+```
 
-comms2<-infomap.community(conn_g)
-comms3<-walktrap.community(conn_g)
-comms4<-label.propagation.community(conn_g)
-comms5<-multilevel.community(conn_g)
-
-compare(comm1 = comms, comm2 = comms2,method = "nmi")
-
+```{r}
+c2 <- multilevel.community(conn_g)
+length(c2)
+modularity(c2)
 
 ```
+<span style="color: blue;">
+Al comparar ambos resultados se puede notar que la partición lograda aplicando Greedy tiene una mayor modularidad, por lo tanto, nos quedamos con esta detección. En ninguno de los dos casos se alcanza un valor de la modularidad alto, lo cual puede deberse a los algoritmos seleccionados o a la naturaleza intrínseca de los datos. También es notable que las métricas no son muy diferentes, lo cual sugiere que las particiones obtenidas por ambos algoritmos pueden ser similares. Comparamos las comunidades obtenidas utilizando la Información Mutua Normalizada.
+</span>
+
+```{r}
+compare(comm1 = c1, comm2 = c2,method = "nmi")
+```
+<span style="color: blue;"> El valor obtenido muestra que se parecen en un 80%.</span>
 
 
 ## Visualización del grafo por comunidades de la componente conexa mayor (1,5 puntos)
@@ -165,17 +215,19 @@ En este apartado, se pide visualizar el grafo coloreando cada nodo en función d
 
 ```{r}
 ### Inserta aqui tu codigo
-cols<-rainbow(max(comms$membership))[comms$membership]
+cols<-rainbow(max(c1$membership))[c1$membership]
 
 ll<-layout.fruchterman.reingold(conn_g)
 
-png("tt.png",width=1200, height=1200, res=100)
+png("c1.png",width=1200, height=1200, res=100)
 plot(conn_g,layout=ll,vertex.label="",
      vertex.color=cols,
      vertex.size=log(bets+2))
 #dev.off()
 ```
 
+<span style="color: blue;"> Como se había mostrado cuando se analizó la partición greedy, este algoritmo ha identificado 6 comunidades. Sin embargo, se puede observar que la mayoría de los nodos se agrupan en dos grandes comunidades, representadas por el rojo y el amarillo.Esto sugiere que el algoritmo puede haber detectado comportamientos anómalos mientras buscaba las comunidades. 
+</span>
 
 ## Difundiendo un rumor (o un virus) en la componente conexa mayor (4 puntos)
 
@@ -211,19 +263,19 @@ Se pide ejecutar una simulación para tres o cuatro valores del parámetro beta 
 2. <span style="color:blue">Al inicio todos los nodos son suceptibles, no hay nadie infectado. Para simular el inicio de la epidemia se seleccionan N nodos aleatorios cuyo estado pasa a ser Infectado.</span>
 3. <span style="color:blue">Durante la ejecución se almacenan en las variables *infected_hist*, *susceptible_hist* y *recovered_hist* el histórico de casos infectados, susceptibles y recuperados respectivamente.</span>
 4. <span style="color:blue">En cada tiempo *t*, se itera por todos los nodos infectados. Una vez que estamos analizando un nodo infectado en el momento *t* pueden ocurrir tres cosas: que se recupere, que infecte a algunos de sus vecinos susceptibles o que no contagie a nadie porque no esté conectado con ningún susceptible.</span>
-5. <span style="color:blue">Para simular una recuperación de un nodo se genera una probabilidad *prob_rec* aleatoria además del parámetro gamma. De manera que, un nodo infectado se recupera si $prob\_rec * gamma$ es mayor que un *threshold*, en este caso, 0.5. La introducción de esta aleatoriedad permite que no todos los nodos tengan la misma capacidad de recuperación, incluso, un mismo nodo, según el momento en que se encuentre puede tener una probabilidad u otra.</span>
+5. <span style="color:blue">Para simular una recuperación de un nodo se genera una probabilidad *prob_rec* aleatoria además del parámetro gamma. De manera que, un nodo infectado se recupera si $prob\_rec * gamma$ es mayor que un *threshold*. La introducción de esta aleatoriedad permite que no todos los nodos tengan la misma capacidad de recuperación, incluso, un mismo nodo, según el momento en que se encuentre puede tener una probabilidad u otra.</span>
 6. <span style="color:blue">Por otra parte, para simular la posibilidad de infección se genera una probabilidad *prob_infect* para cada uno de los vecinos de un nodo *n*. De manera que, un nodo susceptible se contagia si la multiplicación de su *prob_infect* y beta es mayor que 0.5. En un escenario pandémico real, esta probabilidad generada se puede interpretar como el nivel de contacto con un infectado, puesto que no todos los contactos (en este caso, vecinos) tienen por qué tener el mismo tipo de contacto.</span>
 
-
-Es importante resaltar, que el valor de la tasa de infección o transmisión está relacionado, por un lado, con el número de contactos por unidad de tiempo y, por otro lado, con la probabilidad de contagio.
-
-</span>
+<span style="color:blue">Con el fin de visualizar la red resultante de los contagios se crea un grafo vacío cuyos nodos se corresponden con los del grafo que estamo analizando y cada vex que un nodo se contagia se introduce una arista.</span>
 
 
 ```{r}
 
 difusion_simulator <- function(N, beta, gamma, g)
 {
+  new_g <- make_empty_graph(n=length(V(g)), directed = FALSE)
+  V(new_g)$name <- V(g)$name
+  
   V(g)$state <- 'S'
   
   # t=0
@@ -235,11 +287,13 @@ difusion_simulator <- function(N, beta, gamma, g)
   infected_hist <- c(N)
   susceptible_hist <- c(length(V(g)))
   recovered_hist <- c(0)
+  time_hist <- c(0)
   
   t = 1
   times <- 0
   while(times < 3)
   {
+    time_hist <- c(time_hist, t)
     print(paste0("t = ", t))
     t = t + 1
     
@@ -247,7 +301,7 @@ difusion_simulator <- function(N, beta, gamma, g)
     for (index in infected_nodes) 
     {
       node = V(g)[index]
-      print(paste0("Analizando nodo ", node$name))
+      # print(paste0("Analizando nodo ", node$name))
       prob_rec <- runif(1) * gamma
       if (prob_rec >= 0.5) ## si un nodo en el tiempo t se recupera, no tiene sentido que infecte
       {
@@ -269,11 +323,12 @@ difusion_simulator <- function(N, beta, gamma, g)
             susc_node = susc_neighbors[i]
             prob_infect <- beta * n_prob[i]
             
-            if (prob_infect >= 0.5)
+            if (prob_infect >= 0.3)
             {
               # print(paste0("Infectado nodo ", susc_node$name))
               V(g)[V(g)$name == susc_node$name]$state = 'I'
               flag <- TRUE
+              new_g <- new_g + edge(node$name, susc_node$name, color = "red")
             }
           }
         }
@@ -291,59 +346,84 @@ difusion_simulator <- function(N, beta, gamma, g)
     }
     
     infected_nodes = V(g)[V(g)$state == 'I']
+    
     infected_hist <- c(infected_hist, length(infected_nodes))
     susceptible_hist <- c(susceptible_hist, length(V(g)[V(g)$state == 'S']))
     recovered_hist <- c(recovered_hist, length(V(g)[V(g)$state == 'R']))
   }
   
-  return (g)
+  df <- data.frame(infected_hist, susceptible_hist, recovered_hist, time_hist)
+  result <-list("df"= df, "graph" = g, "new_graph"=new_g)
+  return (result)
 }
 
 ```
 
-Se ejcuta el algoritmo con N = 10
+<span style="color:blue">A continuación se ejecuta el algoritmo variando la cantidad de nodos contagiados inicialmente. En cada caso, se ejecuta el algoritmo y se presentan el gráfico de contagios en escala logarítmica y el grafo resultante cuyas aristas representan que un nodo x contagió a un nodo y. Se ejecuta el algoritmo con N = 10</span>
 
 ```{r}
-new_g = difusion_simulator(10, 0.5, 0.6, conn_g)
+r1 = difusion_simulator(10, 0.6, 0.5, conn_g)
 
 ```
-
-N = 50
 ```{r}
+df1 <- r1$df
+g1 <- r1$graph
+ng1 <- r1$new_graph
 
-```
-
-N = 100
-
-```{r}
-
-```
-
-
-```{r}
-cols<-rainbow(3)
-
-ll<-layout.fruchterman.reingold(conn_g)
-
-png("b.png",width=1200, height=1200, res=100)
-plot(conn_g,layout=ll,vertex.label="state",
-     vertex.color=cols,
-     vertex.size=log(bets+2))
-
+ggplot(df1, aes(x=time_hist, y=log(infected_hist))) +
+  geom_line() +
+  geom_point()
 ```
 
 
 ```{r}
-cols<-rainbow(3)
-
-ll<-layout.fruchterman.reingold(new_g)
-
-png("a.png",width=1200, height=1200, res=100)
-plot(new_g,layout=ll,vertex.label="",
-     vertex.color=cols,
-     vertex.size=log(bets+2))
-
+plot(ng1, vertex.size=10, vertex.label=NA)
 ```
+
+<span style="color:blue">N = 50</span>
+
+```{r}
+r2 = difusion_simulator(50, 0.5, 0.6, conn_g)
+```
+```{r}
+
+df2 <- r2$df
+g2 <- r2$graph
+ng2 <- r2$new_graph
+
+ggplot(df2, aes(x=time_hist, y=log(infected_hist))) +
+  geom_line() +
+  geom_point()
+```
+
+
+```{r}
+plot(ng2, vertex.size=10, vertex.label=NA)
+```
+
+<span style="color:blue">N = 100</span>
+
+```{r}
+r3 = difusion_simulator(100, 0.4, 0.7, conn_g)
+```
+```{r}
+df3 <- r3$df
+g3 <- r3$graph
+ng3 <- r3$new_graph
+
+ggplot(df3, aes(x=time_hist, y=log(infected_hist))) +
+  geom_line() +
+  geom_point()
+```
+
+```{r}
+plot(ng3, vertex.size=10, vertex.label=NA)
+```
+
+
+<span style="color:blue"> En este ejercicio se ha implementado un simulador de epidemias. El agoritmo propuesto, y que no refleja el comportamiento real de una epidemia, esta muy influenciado por la aleatoriedad por lo que la elección de los parámetros, tanto el beta, el gamma como los threshold propios del algoritmo influyen en gran medida en los resultados alcanzados. Los parámetros que aquí se muestran se han seleccionado después de varios experimentos teniendo en cuenta que con ellos el algoritmo es capaz de mostrar las diferentes casuísticas y propiciando que converjan en un pequeño número de pasos para reeducir el tiempo de ejecución. De manera general, se puede afirmar que mientras mas grande el número de contagiados inicial, más demora el algoritmo en converger, atendiendo también a las probabilidades. Asimismo, se puede notar que mientras más grande el parámetro beta más infectados (caso 1) y mientras más grande el gamma, la curva de contagios muestra un descenso rápido (caso 3). </span>
+
+
 
 
 
